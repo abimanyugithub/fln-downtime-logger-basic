@@ -55,11 +55,13 @@ class PeranForm(forms.ModelForm):
     class Meta:
         model = Role
         fields = [
-            'departemen',
             'nama_role',
+            'departemen',
+            # 'area_kerja',
         ]
 
         labels = {
+            # 'area_kerja': 'Working Area',
             'departemen': 'Select departemen',
             'nama_role': 'Role name',
         }
@@ -67,4 +69,5 @@ class PeranForm(forms.ModelForm):
         widgets = {
             'nama_role': forms.TextInput(attrs={'class': 'form-control mt-2 mb-2', 'required': 'required'}),
             'departemen': forms.Select(attrs={'class': 'form-control mt-2 mb-2 bg-light text-muted', 'readonly': 'readonly'}),
+            # 'area_kerja': forms.Select(attrs={'class': 'form-control mt-2 mb-2 bg-light text-muted'}),
         }

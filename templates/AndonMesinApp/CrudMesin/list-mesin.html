@@ -45,6 +45,7 @@
                                                     {% for key, value in fields.items %}
                                                         <th>{{ value }}</th>
                                                     {% endfor %}
+                                                    <th>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -54,6 +55,7 @@
                                                         {% for field in fields %}
                                                             <td>{{ obj|get_field_value:field }}</td>
                                                         {% endfor %}
+                                                        <td><button class="btn btn-warning" onclick="window.location.href='{% url 'update_mesin' pk=obj.id %}'">Edit</button></td>
                                                     </tr>
                                                 {% endfor %}
                                             </tbody>
@@ -64,18 +66,9 @@
                         </div>
                     </div>
                 </main>
-                <footer class="py-4 bg-light mt-auto">
-                    <div class="container-fluid px-4">
-                        <div class="d-flex align-items-center justify-content-between small">
-                            <div class="text-muted">Copyright &copy; Your Website 2023</div>
-                            <div>
-                                <a href="#">Privacy Policy</a>
-                                &middot;
-                                <a href="#">Terms &amp; Conditions</a>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                {% block footer %}
+                    {% include "AndonMesinApp/Base/footer.html" %}
+                {% endblock footer %}
             </div>
         </div>
 

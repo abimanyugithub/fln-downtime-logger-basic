@@ -9,7 +9,14 @@ register = template.Library()
 
 @register.filter
 def get_field_value(obj, attr_name):
-    """ Filter ini mengambil nilai dari field yang ditentukan dari sebuah instance model Django, dengan penanganan khusus untuk file fields & date. """
+    if attr_name == 'duration':
+        duration = obj.duration()  # Call the duration method
+        return str(duration).split('.')[0] if duration else "--"
+    
+    if attr_name == 'end_time':
+        end_time = getattr(obj, 'end_time', None)
+        return format(end_time, 'd/m/Y H:i') if end_time else "--"
+    
     value = getattr(obj, attr_name, None)
     if isinstance(value, FieldFile):
         return os.path.basename(value.name)

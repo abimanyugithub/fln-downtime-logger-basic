@@ -22,7 +22,7 @@
                     <div class="container-fluid px-4">
                         <h1 class="mt-4">Downtime Logger</h1>
                         <ol class="breadcrumb mb-4">
-                            <li class="breadcrumb-item active">Department</li>
+                            <li class="breadcrumb-item active">Downtime</li>
                         </ol>
                         <div class="row">
                             <div class="col-xl-6">
@@ -30,12 +30,8 @@
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <div>
                                             <i class="fas fa-chart-area me-1"></i>
-                                            Departments List
+                                            Downtime List
                                         </div>
-                                        <button type="button" class="btn btn-primary btn-sm" onclick="window.location.href='{% url 'register_departemen' %}'">
-                                            <i class="fas fa-plus me-1"></i>
-                                            New
-                                        </button>
                                     </div>
                                     <div class="card-body">
                                         <table id="datatablesSimple">
@@ -45,18 +41,16 @@
                                                     {% for key, value in fields.items %}
                                                         <th>{{ value }}</th>
                                                     {% endfor %}
-                                                    <th>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for obj in departemen_list %}
-                                                    <tr class="align-middle">
-                                                        <td>{{ forloop.counter }}</td>
-                                                        {% for field in fields %}
-                                                            <td>{{ obj|get_field_value:field }}</td>
-                                                        {% endfor %}
-                                                        <td><button class="btn btn-warning" onclick="window.location.href='{% url 'update_departemen' pk=obj.id %}'">Edit</button></td>
-                                                    </tr>
+                                                {% for obj in downtime_list %}
+                                                <tr class="align-middle">
+                                                    <td>{{ forloop.counter }}</td>
+                                                    {% for field in fields %}
+                                                        <td>{{ obj|get_field_value:field }}</td>
+                                                    {% endfor %}
+                                                </tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
