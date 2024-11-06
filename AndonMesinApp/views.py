@@ -18,12 +18,13 @@ class ViewDashboard(TemplateView):
         mesin_list = Mesin.objects.all().order_by('-kategori', 'nomor_mesin')
 
         for item in mesin_list:
+            
             if item.status == "ready":
-                item.color = "success"
+                item.color = "success text-white"
             elif item.status == "pending":
-                item.color = "warning"
+                item.color = "warning text-dark"
             else:
-                item.color = "secondary"
+                item.color = "secondary text-white"
 
         context['mesin_list'] = mesin_list
 
@@ -144,6 +145,19 @@ class ListDowntime(ListView):
         
         return context
 
+def AsyncMesinCard(request):
+    mesin_list = Mesin.objects.all().order_by('-kategori', 'nomor_mesin')
+
+    for item in mesin_list:
+        if item.status == "ready":
+            item.color = "success text-white"
+        elif item.status == "pending":
+            item.color = "warning text-dark"
+        else:
+            item.color = "secondary text-white"
+
+    return render(request, 'AndonMesinApp/HtmxPartial/list-card-mesin.html', {'mesin_list': mesin_list})
+
 @csrf_exempt
 def ReceiveData(request):
     if request.method == 'POST':
@@ -161,20 +175,21 @@ def ReceiveData(request):
             role_name = data.get('role_name')
             department = data.get('department')
             # working_area = data.get('working_area')
+            status = data.get('status')
 
             mesin = get_object_or_404(Mesin, nomor_mesin=no_machine, kategori__kategori=category)
             peran = get_object_or_404(Role, nama_role=role_name, departemen__departemen=department)
             # peran = get_object_or_404(Role, nama_role=role_name, departemen__departemen=category)
-                
-            if mesin.status == "ready":
-                mesin.status = 'pending'
-                mesin.save()
+            if status == 'mulai':
+                if mesin.status == "ready":
+                    mesin.status = 'pending'
+                    mesin.save()
 
-                Downtime.objects.create(
-                    mesin = mesin,
-                    role = peran,
-                    start_time = timezone.now()
-                )
+                    Downtime.objects.create(
+                        mesin = mesin,
+                        role = peran,
+                        start_time = timezone.now()
+                    )
                 
             else:
                 mesin.status = "ready"

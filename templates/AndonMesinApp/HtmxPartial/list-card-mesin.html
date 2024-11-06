@@ -1,0 +1,14 @@
+{% for obj in mesin_list %}
+<div class="col-xl-3 col-md-6">
+    <div class="card bg-{{ obj.color }} mb-4">
+        <div class="card-body d-flex align-items-center justify-content-between">
+            <div class="h6">{{ obj.kategori|upper }}</div>
+            <div class="h1">{{ obj.nomor_mesin|upper }}</div>
+        </div>
+        <div class="card-footer d-flex align-items-center justify-content-between">
+            <div class="h6">{{ obj.role|upper }}</div>
+            <div class="small">{{ obj.status|upper }} </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
