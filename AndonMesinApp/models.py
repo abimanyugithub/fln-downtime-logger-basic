@@ -11,7 +11,7 @@ class KategoriMesin(models.Model):
 class Mesin(models.Model):
     kategori = models.ForeignKey(KategoriMesin, on_delete=models.CASCADE)
     nomor_mesin = models.CharField(max_length=255)
-    status = models.CharField(max_length=255, default='ready')
+    status = models.CharField(max_length=255, default='running')
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

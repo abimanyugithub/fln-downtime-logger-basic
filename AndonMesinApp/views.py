@@ -37,9 +37,9 @@ class ViewDashboard(TemplateView):
 
         for item in mesin_list:
             
-            if item.status == "ready":
+            if item.status == "running":
                 item.color = "success text-white"
-            elif item.status == "pending":
+            elif item.status == "downtime":
                 item.color = "warning text-dark"
             else:
                 item.color = "secondary text-white"
@@ -168,9 +168,9 @@ def AsyncMesinCard(request):
     mesin_list = Mesin.objects.all().order_by('-kategori', 'nomor_mesin')
 
     for item in mesin_list:
-        if item.status == "ready":
+        if item.status == "running":
             item.color = "success text-white"
-        elif item.status == "pending":
+        elif item.status == "downtime":
             item.color = "warning text-dark"
         else:
             item.color = "secondary text-white"
@@ -196,9 +196,13 @@ def ReceiveData(request):
 
             mesin = get_object_or_404(Mesin, nomor_mesin=no_machine, kategori__kategori=category)
             peran = get_object_or_404(Role, nama_role=role_name, departemen__departemen=department)
+
+            # jika start downtime "mulai"
             if status == 'mulai':
-                if mesin.status == "ready":
-                    mesin.status = 'pending'
+                
+                # jika status mesin running
+                if mesin.status == "running":
+                    mesin.status = 'downtime'
                     mesin.save()
 
                     downtime = Downtime.objects.create(
@@ -207,16 +211,16 @@ def ReceiveData(request):
                         start_time = timezone.now()
                     )
 
-                    # Send Telegram notification
-                    message = f"⚠️ Downtime Alert for Machine {mesin.kategori} - {mesin.nomor_mesin}\n"
-                    message += f"Status: {mesin.status.capitalize()}\n"
-                    message += f"Downtime started at: {downtime.start_time.strftime('%d-%m-%Y %H:%M')}\n"
-                    message += f"Role: {downtime.role}\n"
-                    send_telegram_message(message)
-                    # send_telegram_message(f"❌ Machine {mesin.kategori} - {mesin.nomor_mesin} is now pending. Downtime started.")
+                # Send Telegram notification
+                message = f"⚠️ Downtime Alert for Machine\n\n"
+                message += f"Machine: {mesin.kategori} - {mesin.nomor_mesin}\n"
+                message += f"Status: {mesin.status.capitalize()}\n"
+                message += f"Downtime started at: {downtime.start_time.strftime('%d-%m-%Y %H:%M')}\n"
+                message += f"Role: {downtime.role}\n"
+                send_telegram_message(message)
                 
             else:
-                mesin.status = "ready"
+                mesin.status = "running"
                 mesin.save()
 
                 downtime_update = Downtime.objects.filter(mesin=mesin, role=peran, status='waiting').first()
@@ -225,7 +229,8 @@ def ReceiveData(request):
                 downtime_update.save()
 
                 # Send Telegram notification
-                message = f"✅ Downtime Finished for Machine {mesin.kategori} - {mesin.nomor_mesin}\n"
+                message = f"✅ Downtime Finished for Machine\n\n" 
+                message += f"Machine: {mesin.kategori} - {mesin.nomor_mesin}\n"
                 message += f"Status: {mesin.status.capitalize()}\n"
                 message += f"Downtime started at: {downtime_update.start_time.strftime('%d-%m-%Y %H:%M')}\n"
                 message += f"Downtime ended at: {downtime_update.end_time.strftime('%d-%m-%Y %H:%M')}\n"
