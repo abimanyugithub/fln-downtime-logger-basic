@@ -8,6 +8,24 @@ from django.http import HttpResponse, HttpResponseForbidden, JsonResponse, Http4
 from .forms import MesinForm, KategoriForm, DepartemenForm, PeranForm
 from django.utils import timezone
 from django.db.models import Q
+import requests
+
+def send_telegram_message(message):
+    bot_token = '7844593434:AAHZKtd2_afWiM0YrlEZwr-07tZwpCmhtTc'
+    chat_id = '-1002408042848'
+    
+    
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        'chat_id': chat_id,
+        'text': message
+    }
+    response = requests.post(url, data=payload)
+    
+    if response.status_code == 200:
+        print("Message sent successfully")
+    else:
+        print("Failed to send message")
 
 class ViewDashboard(TemplateView):
     template_name = 'AndonMesinApp/dashboard.html'
@@ -138,6 +156,7 @@ class ListDowntime(ListView):
     template_name = 'AndonMesinApp/CrudDowntime/list-downtime.html'
     model = Downtime
     context_object_name = 'downtime_list'
+    ordering = ['-start_time']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -171,25 +190,30 @@ def ReceiveData(request):
             # Extract fields from the data
             no_machine = data.get('no_machine')
             category = data.get('category')
-
             role_name = data.get('role_name')
             department = data.get('department')
-            # working_area = data.get('working_area')
             status = data.get('status')
 
             mesin = get_object_or_404(Mesin, nomor_mesin=no_machine, kategori__kategori=category)
             peran = get_object_or_404(Role, nama_role=role_name, departemen__departemen=department)
-            # peran = get_object_or_404(Role, nama_role=role_name, departemen__departemen=category)
             if status == 'mulai':
                 if mesin.status == "ready":
                     mesin.status = 'pending'
                     mesin.save()
 
-                    Downtime.objects.create(
+                    downtime = Downtime.objects.create(
                         mesin = mesin,
                         role = peran,
                         start_time = timezone.now()
                     )
+
+                    # Send Telegram notification
+                    message = f"⚠️ Downtime Alert for Machine {mesin.kategori} - {mesin.nomor_mesin}\n"
+                    message += f"Status: {mesin.status.capitalize()}\n"
+                    message += f"Downtime started at: {downtime.start_time.strftime('%d-%m-%Y %H:%M')}\n"
+                    message += f"Role: {downtime.role}\n"
+                    send_telegram_message(message)
+                    # send_telegram_message(f"❌ Machine {mesin.kategori} - {mesin.nomor_mesin} is now pending. Downtime started.")
                 
             else:
                 mesin.status = "ready"
@@ -200,8 +224,18 @@ def ReceiveData(request):
                 downtime_update.status = 'done'
                 downtime_update.save()
 
+                # Send Telegram notification
+                message = f"✅ Downtime Finished for Machine {mesin.kategori} - {mesin.nomor_mesin}\n"
+                message += f"Status: {mesin.status.capitalize()}\n"
+                message += f"Downtime started at: {downtime_update.start_time.strftime('%d-%m-%Y %H:%M')}\n"
+                message += f"Downtime ended at: {downtime_update.end_time.strftime('%d-%m-%Y %H:%M')}\n"
+                message += f"Role: {downtime_update.role}\n"
+                message += f"Duration: {str(downtime_update.duration()).split('.')[0]}\n"
+                send_telegram_message(message)
+
             # Return a success response
             return JsonResponse({"status": "success", "message": "Data received successfully"}, status=200)
 
         except json.JSONDecodeError:
             return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
+        

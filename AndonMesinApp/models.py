@@ -39,7 +39,7 @@ class Downtime(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=255, default='waiting')
-
+    
     def duration(self):
         """Calculate the duration of the downtime."""
         if self.start_time and self.end_time:
