@@ -197,7 +197,7 @@ def ReceiveData(request):
             mesin = get_object_or_404(Mesin, nomor_mesin=no_machine, kategori__kategori=category)
             peran = get_object_or_404(Role, nama_role=role_name, departemen__departemen=department)
 
-            # jika start downtime "mulai"
+            # jika start role downtime "mulai"
             if status == 'mulai':
                 
                 # jika status mesin running
@@ -205,30 +205,39 @@ def ReceiveData(request):
                     mesin.status = 'downtime'
                     mesin.save()
 
-                    downtime = Downtime.objects.create(
-                        mesin = mesin,
-                        role = peran,
-                        start_time = timezone.now()
-                    )
+                downtime = Downtime.objects.create(
+                    mesin=mesin,
+                    role=peran,
+                    start_time=timezone.now()
+                )
 
-                # Send Telegram notification
+                # kirim ke grup Telegram notification
                 message = f"⚠️ Downtime Alert for Machine\n\n"
                 message += f"Machine: {mesin.kategori} - {mesin.nomor_mesin}\n"
                 message += f"Status: {mesin.status.capitalize()}\n"
                 message += f"Downtime started at: {downtime.start_time.strftime('%d-%m-%Y %H:%M')}\n"
                 message += f"Role: {downtime.role}\n"
                 send_telegram_message(message)
-                
-            else:
-                mesin.status = "running"
-                mesin.save()
 
+            # jika start role downtime "selesai"
+            elif status == 'selesai':
+
+                # update status role terkait id mesin
                 downtime_update = Downtime.objects.filter(mesin=mesin, role=peran, status='waiting').first()
                 downtime_update.end_time = timezone.now()
                 downtime_update.status = 'done'
                 downtime_update.save()
 
-                # Send Telegram notification
+                cek_status_mesin = Downtime.objects.filter(mesin=mesin, status='waiting').exists()
+
+                # update mesin jika mesin tidak ada status "waiting"
+                if not cek_status_mesin:  # Mengecek jika ada tepat satu entri
+                    mesin.status = "running"
+                    mesin.save()
+                else:
+                    pass
+
+                # kirim ke grup Telegram notification
                 message = f"✅ Downtime Finished for Machine\n\n" 
                 message += f"Machine: {mesin.kategori} - {mesin.nomor_mesin}\n"
                 message += f"Status: {mesin.status.capitalize()}\n"
@@ -239,8 +248,20 @@ def ReceiveData(request):
                 send_telegram_message(message)
 
             # Return a success response
-            return JsonResponse({"status": "success", "message": "Data received successfully"}, status=200)
+            # return JsonResponse({"status": "success", "message": "Data received successfully"}, status=200)
+
+            # Return a success response with received data
+            response_data = {
+                "status": "success",
+                "message": "Data received successfully",
+                "received_data": data
+            }
+
+            return JsonResponse(response_data, status=200)
 
         except json.JSONDecodeError:
-            return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
-        
+            return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
