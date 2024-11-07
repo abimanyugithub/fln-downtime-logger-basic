@@ -1,19 +1,22 @@
+import json
+import requests
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView, ListView, UpdateView
-from .models import Mesin, KategoriMesin, Departemen, Role, Downtime
 from django.views.decorators.csrf import csrf_exempt
-import json
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse, Http404
-from .forms import MesinForm, KategoriForm, DepartemenForm, PeranForm
 from django.utils import timezone
 from django.db.models import Q
-import requests
+from django.conf import settings
+from .models import Mesin, KategoriMesin, Departemen, Role, Downtime
+from .forms import MesinForm, KategoriForm, DepartemenForm, PeranForm
+from datetime import timedelta
 
+
+# fungsi kirim grup telegram
 def send_telegram_message(message):
-    bot_token = '7844593434:AAHZKtd2_afWiM0YrlEZwr-07tZwpCmhtTc'
-    chat_id = '-1002408042848'
-    
+    bot_token = settings.TELEGRAM_API_TOKEN
+    chat_id = '-1002408042848' # id grup
     
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
@@ -25,7 +28,7 @@ def send_telegram_message(message):
     if response.status_code == 200:
         print("Message sent successfully")
     else:
-        print("Failed to send message")
+        print("Failed to send message")            
 
 class ViewDashboard(TemplateView):
     template_name = 'AndonMesinApp/dashboard.html'
@@ -152,11 +155,8 @@ class ListPeran(ListView):
         context['fields'] = {'nama_role': 'Role name', 'departemen': 'Department'}
         return context
     
-class ListDowntime(ListView):
+class ListDowntime(TemplateView):
     template_name = 'AndonMesinApp/CrudDowntime/list-downtime.html'
-    model = Downtime
-    context_object_name = 'downtime_list'
-    ordering = ['-start_time']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -164,6 +164,7 @@ class ListDowntime(ListView):
         
         return context
 
+# menapilkan card di dashboard
 def AsyncMesinCard(request):
     mesin_list = Mesin.objects.all().order_by('-kategori', 'nomor_mesin')
 
@@ -176,6 +177,25 @@ def AsyncMesinCard(request):
             item.color = "secondary text-white"
 
     return render(request, 'AndonMesinApp/HtmxPartial/list-card-mesin.html', {'mesin_list': mesin_list})
+
+# menampilkan list downtime
+def AsyncDowntimeList(request):
+    downtime_list = Downtime.objects.all().order_by('-start_time')
+    return render(
+        request,
+        'AndonMesinApp/HtmxPartial/list-downtime.html',  # Path to the partial template for rendering downtime data
+        {
+            'downtime_list': downtime_list,  # Context variable containing the downtime entries
+            'fields': {  # Add the field names like you did in the context of the class-based view
+                'mesin': 'Mesin',
+                'role': 'Role',
+                'start_time': 'Start time',
+                'end_time': 'End time',
+                'status': 'Status',
+                'duration': 'Duration'
+            }
+        }
+    )
 
 @csrf_exempt
 def ReceiveData(request):
@@ -250,11 +270,11 @@ def ReceiveData(request):
             # Return a success response
             # return JsonResponse({"status": "success", "message": "Data received successfully"}, status=200)
 
-            # Return a success response with received data
+            # Return a success response with received data and also include the received data
             response_data = {
                 "status": "success",
                 "message": "Data received successfully",
-                "received_data": data
+                "received_data": data  # Menambahkan data yang diterima dalam response
             }
 
             return JsonResponse(response_data, status=200)

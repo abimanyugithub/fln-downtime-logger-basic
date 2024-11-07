@@ -5,6 +5,7 @@ urlpatterns = [
     path('', views.ViewDashboard.as_view(), name='dashboard'),
     # htmx response
     path('async-mesin-card/', views.AsyncMesinCard, name='async_card'),
+    path('async-list-downtime/', views.AsyncDowntimeList, name='async_list_dt'),
 
     # Kategori
     path('category/register/', views.RegisterKategori.as_view(), name='register_kategori'),

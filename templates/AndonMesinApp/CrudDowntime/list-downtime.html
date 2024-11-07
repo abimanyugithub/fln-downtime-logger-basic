@@ -43,15 +43,7 @@
                                                     {% endfor %}
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                {% for obj in downtime_list %}
-                                                <tr class="align-middle">
-                                                    <td>{{ forloop.counter }}</td>
-                                                    {% for field in fields %}
-                                                        <td>{{ obj|get_field_value:field }}</td>
-                                                    {% endfor %}
-                                                </tr>
-                                                {% endfor %}
+                                            <tbody hx-get="{% url 'async_list_dt' %}" hx-trigger="load, every 3s">
                                             </tbody>
                                         </table>
                                     </div>

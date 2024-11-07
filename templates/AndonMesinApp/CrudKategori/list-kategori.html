@@ -55,7 +55,7 @@
                                                     {% for field in fields %}
                                                         <td>{{ obj|get_field_value:field }}</td>
                                                     {% endfor %}
-                                                    <td><button class="btn btn-warning" onclick="window.location.href='{% url 'update_kategori' pk=obj.id %}'">Edit</button></td>
+                                                    <td><button class="btn btn-sm btn-warning" onclick="window.location.href='{% url 'update_kategori' pk=obj.id %}'">Edit</button></td>
                                                 </tr>
                                                 {% endfor %}
                                             </tbody>
