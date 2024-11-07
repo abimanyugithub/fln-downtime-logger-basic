@@ -31,5 +31,6 @@ urlpatterns = [
     path('role/list/', views.ListPeran.as_view(), name='list_role'),
 
     # esp endpoint
-    path('response/esp32-endpoint/', views.ReceiveData, name='control_receive'),
+    # path('response/esp32-endpoint/', views.ReceiveData, name='control_receive'),
+    path('response/esp32-endpoint/', views.Esp32EndpointView.as_view(), name='esp32-endpoint'),
 ]

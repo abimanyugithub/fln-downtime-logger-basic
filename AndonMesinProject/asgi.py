@@ -8,20 +8,30 @@ https://docs.djangoproject.com/en/4.2/howto/deployment/asgi/
 """
 
 import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'AndonMesinProject.settings')
+os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
+django.setup()
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
 from django.urls import path
 from AndonMesinApp import consumers
+from channels.auth import AuthMiddlewareStack
+from channels.security.websocket import AllowedHostsOriginValidator
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'AndonMesinProject.settings')
+application = get_asgi_application()
 
-application = ProtocolTypeRouter({
-    "http": get_asgi_application(),  # Menangani HTTP
-    "websocket": AuthMiddlewareStack(  # Menangani WebSocket
-        URLRouter([
-            path('ws/some_path/', consumers.MyWebSocketConsumer.as_asgi()),  # Routing URL WebSocket
-        ])
-    ),
-})
+ws_patterns= [
+        
+    path('ws/mesin_downtime/',consumers.MesinDowntimeConsumer.as_asgi())
+]
+
+application= ProtocolTypeRouter(
+    {
+        'http': application,
+        'websocket': AllowedHostsOriginValidator(
+            AuthMiddlewareStack(URLRouter(ws_patterns))
+        )
+    }
+)

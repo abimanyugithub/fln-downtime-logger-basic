@@ -1,4 +1,4 @@
 ## Instalation
 ```bash
-pip install django mysqlclient channels daphne
+pip install django mysqlclient djangorestframework channels daphne
 ```
