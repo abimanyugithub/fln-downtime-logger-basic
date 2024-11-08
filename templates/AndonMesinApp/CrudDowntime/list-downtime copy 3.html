@@ -1,0 +1,117 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+    {% block header %}
+        {% include "AndonMesinApp/Base/header.html" %}
+    {% endblock header %}
+    <body class="sb-nav-fixed">
+
+        {% block navbar %}
+            {% include "AndonMesinApp/Base/navbar.html" %}
+        {% endblock navbar %}
+
+        <div id="layoutSidenav">
+            
+            {% block sidebar %}
+                {% include "AndonMesinApp/Base/sidebar.html" %}
+            {% endblock sidebar %}
+
+            <div id="layoutSidenav_content">
+                <main>
+                    <div class="container-fluid px-4">
+                        <h1 class="mt-4">Downtime Logger</h1>
+                        <ol class="breadcrumb mb-4">
+                            <li class="breadcrumb-item active">Downtime</li>
+                        </ol>
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card mb-4">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fas fa-chart-area me-1"></i>
+                                            Downtime List
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                
+                
+                <h1>Real-time Data</h1>
+                <table id="mesin-table" class="table" border="1">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Kategori</th>
+                            <th>Nomor Mesin</th>
+                            <th>Status</th>
+                            <th>Aktif</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data mesin akan ditampilkan di sini -->
+                    </tbody>
+                </table>
+                <script>
+                    // Membuat koneksi WebSocket ke server
+                    const socket = new WebSocket('ws://10.35.37.165:8000/ws/mesin/');  // Sesuaikan URL WebSocket server
+
+                    // Fungsi untuk menangani pesan yang diterima dari server
+                    socket.onopen = function() {
+                        console.log('WebSocket connected');
+                    };
+
+                    socket.onmessage = function(event) {
+                        const message = JSON.parse(event.data);
+                        console.log(message); // Debug untuk cek apakah data diterima dengan benar
+                    
+                        if (message.type === 'mesin_data') {
+                            const mesinData = JSON.parse(message.data);
+                            console.log('Mesin data:', mesinData); // Cek data yang diterima
+                            displayMesinData(mesinData);
+                        }
+                    };
+
+                    function displayMesinData(data) {
+                        const tableBody = document.querySelector('#mesin-table tbody');
+                        tableBody.innerHTML = ''; // Kosongkan tabel sebelum menambah data baru
+                    
+                        // Menambahkan setiap data mesin ke dalam tabel
+                        data.forEach(item => {
+                            const row = document.createElement('tr');
+                            const fields = item.fields;
+                    
+                            row.innerHTML = `
+                                <td>${item.pk}</td>
+                                <td>${fields.kategori}</td>
+                                <td>${fields.nomor_mesin}</td>
+                                <td>${fields.status}</td>
+                                <td>${fields.is_active ? 'Ya' : 'Tidak'}</td>
+                            `;
+                    
+                            tableBody.appendChild(row);
+                        });
+                    }
+
+
+                </script>
+
+
+                {% block footer %}
+                    {% include "AndonMesinApp/Base/footer.html" %}
+                {% endblock footer %}
+            </div>
+        </div>
+
+        {% block javascript %}
+            {% include "AndonMesinApp/Base/javascript.html" %}
+        {% endblock javascript %}
+
+    </body>
+</html>

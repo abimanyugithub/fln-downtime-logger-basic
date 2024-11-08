@@ -1,51 +1,52 @@
-# your_app/consumers.py
-
+# consumers.py
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from .models import Mesin, Downtime
+from .models import Mesin
 
-class MesinDowntimeConsumer(AsyncWebsocketConsumer):
+class MesinConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        # Menyambungkan WebSocket ke room ini
-        self.room_name = 'mesin_downtime_room'
-        self.room_group_name = f'room_{self.room_name}'
+        self.room_name = 'mesin_room'
+        self.room_group_name = f"mesin_{self.room_name}"
 
-        # Bergabung ke grup untuk menerima pesan
+        # Bergabung ke group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
 
-        # Terima koneksi WebSocket
         await self.accept()
 
         # Kirimkan data mesin dan downtime yang sudah diurutkan setelah koneksi
-        await self.send_mesin_and_downtime_data()
+        await self.send_mesin_data()
 
     async def disconnect(self, close_code):
-        # Keluar dari grup jika WebSocket terputus
+        # Tinggalkan group ketika WebSocket terputus
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
-    async def receive(self, text_data):
-        # Menerima data dari WebSocket (misalnya perintah atau pesan)
-        pass
+    async def send_mesin_data(self):
+        queryset = Mesin.objects.all().order_by('-kategori', 'nomor_mesin')
 
-    async def send_mesin_and_downtime_data(self):
-        # Ambil semua objek Mesin dan urutkan berdasarkan kategori (desc) dan nomor_mesin (asc)
-        mesin_data = Mesin.objects.all().order_by('-kategori', 'nomor_mesin')
+        # Ubah queryset menjadi list of dictionaries
+        data = [
+            {
+                'nomor_mesin': mesin.nomor_mesin,
+                'kategori': mesin.kategori.kategori,
+                'status': mesin.status,
+            }
+            for mesin in queryset
+        ]
 
-        # Ambil semua objek Downtime dan urutkan berdasarkan start_time (desc)
-        downtime_data = Downtime.objects.all().order_by('-start_time')
+        # Send the updated data to connected clients
+        await self.send(text_data=json.dumps(data))
 
-        # Format data mesin dan downtime menjadi format JSON
-        mesin_list = [{"nomor_mesin": mesin.nomor_mesin, "kategori": mesin.kategori} for mesin in mesin_data]
-        downtime_list = [{"id": downtime.id, "start_time": downtime.start_time, "end_time": downtime.end_time} for downtime in downtime_data]
-
-        # Kirim data mesin dan downtime ke WebSocket
+    # Terima pesan dari grup (untuk pembaruan atau penghapusan)
+    async def update_mesin(self, event):
+        # Kirim pesan ke WebSocket
+        message = event['message']
         await self.send(text_data=json.dumps({
-            'mesins': mesin_list,
-            'downtimes': downtime_list
+            'message': message
         }))
+   

@@ -14,6 +14,8 @@ from datetime import timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 # fungsi kirim grup telegram
@@ -285,3 +287,5 @@ class Esp32EndpointView(APIView):
             return Response({"status": "error", "message": "Invalid JSON data"}, status=400)
         except Exception as e:
             return Response({"status": "error", "message": str(e)}, status=500)
+        
+

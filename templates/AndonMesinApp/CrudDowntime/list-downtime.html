@@ -34,24 +34,62 @@
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <table id="datatablesSimple">
+                                        <table id="mesin-table" class="table">
                                             <thead>
                                                 <tr>
-                                                    <th class="mw-25">#</th>
-                                                    {% for key, value in fields.items %}
-                                                        <th>{{ value }}</th>
-                                                    {% endfor %}
+                                                    <th>ID</th>
+                                                    <th>Kategori</th>
+                                                    <th>Nomor Mesin</th>
+                                                    <th>Status</th>
+                                                    <th>Aktif</th>
                                                 </tr>
                                             </thead>
-                                            <tbody hx-get="{% url 'async_list_dt' %}" hx-trigger="load, every 3s">
+                                            <tbody>
+                                                <!-- Data mesin akan ditampilkan di sini -->
                                             </tbody>
                                         </table>
+                                        
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </main>
+                <h1>Real-time Data</h1>
+    <ul id="data-list">
+        {% for item in data %}
+            <li>{{ item.field1 }} - {{ item.field2 }}</li>
+        {% endfor %}
+    </ul>
+    <script>
+        const mesinSocket = new WebSocket('ws://' + window.location.host + '/ws/mesin/');
+
+        mesinSocket.onopen = function(event) {
+            console.log('WebSocket connection established.');
+            // Send "ping" as a JSON object after connection is opened to server
+            mesinSocket.send(JSON.stringify());
+        };
+
+        mesinSocket.onmessage = function(event) {
+            // console.log(event.data);
+            const data = JSON.parse(event.data);
+            const dataList = document.getElementById("data-list");
+            dataList.textContent = ''; // Clear previous data
+
+            // Iterate over the received data and create list items
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `${item.nomor_mesin} - ${item.kategori} - ${item.status}`;
+                dataList.appendChild(li);
+            });
+            mesinSocket.send(JSON.stringify());
+        };
+
+        mesinSocket.onclose = function(event) {
+            console.log('WebSocket connection closed.');
+        };
+    </script>
+
                 {% block footer %}
                     {% include "AndonMesinApp/Base/footer.html" %}
                 {% endblock footer %}
